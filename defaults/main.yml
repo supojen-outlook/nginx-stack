@@ -1,0 +1,26 @@
+---
+# Nginx Configuration
+nginx_worker_processes: auto
+nginx_worker_connections: 1024
+nginx_client_max_body_size: 100M
+nginx_keepalive_timeout: 65
+
+# GoAccess Configuration (built-in, cannot be disabled)
+goaccess_enabled: true
+goaccess_stats_path: /var/www/html/stats.html
+goaccess_ws_port: 7890
+goaccess_admin_user: admin
+goaccess_admin_password: changeme  # REQUIRED: Override this in your playbook
+
+# MaxMind GeoIP Configuration
+maxmind_account_id: ""  # REQUIRED: Your MaxMind Account ID
+maxmind_license_key: ""  # REQUIRED: Your MaxMind License Key
+
+# Domain for WebSocket URL
+domain: localhost  # REQUIRED: Set to your actual domain
+
+# Virtual Host Configuration
+www_root: /var/www/html  # 網站根目錄
+admin_port: 8081  # Admin 後台連接埠
+client_port: 8082  # Client 前端連接埠
+api_port: 8080  # API 連接埠

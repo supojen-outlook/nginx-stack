@@ -1,0 +1,47 @@
+galaxy_info:
+  author: supojen
+  description: Production-ready Nginx stack with GoAccess real-time analytics, GeoIP, and rate limiting
+  company: ""
+
+  # 如果您的 issue 追踪器不在 GitHub 上，取消注释下一行并提供值
+  # issue_tracker_url: http://example.com/issue/tracker
+
+  # 从 https://spdx.org 选择有效的授权 ID，以下是一些建议：
+  # - BSD-3-Clause (默认)
+  # - MIT
+  # - GPL-2.0-or-later
+  # - GPL-3.0-only
+  # - Apache-2.0
+  # - CC-BY-4.0
+  license: BSD
+
+  min_ansible_version: "2.9"
+
+  # 如果这是支持容器的 role，提供最低 Ansible Container 版本
+  # min_ansible_container_version:
+
+  platforms:
+    - name: Ubuntu
+      versions:
+        - noble    # 24.04
+        - jammy    # 22.04
+    - name: Debian
+      versions:
+        - bookworm # 12
+        - bullseye # 11
+    - name: EL
+      versions:
+        - "8"
+        - "9"
+
+  galaxy_tags:
+    - nginx
+    - webserver
+    - goaccess
+    - analytics
+    - geoip
+    - logging
+    - monitoring
+
+dependencies: []
+  # 在此列出 role 依赖，每行一个。如果添加依赖，请移除上面的 '[]'

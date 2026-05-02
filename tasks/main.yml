@@ -1,0 +1,179 @@
+---
+- name: Update apt cache and install Nginx (Debian/Ubuntu)
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+    update_cache: true
+  notify: Restart nginx
+  when: ansible_facts['os_family'] == "Debian"
+
+- name: Install Nginx (Red Hat/CentOS)
+  ansible.builtin.dnf:
+    name: nginx
+    state: present
+  notify: Restart nginx
+  when: ansible_facts['os_family'] == "RedHat"
+
+- name: Create nginx config directory
+  ansible.builtin.file:
+    path: /etc/nginx/conf.d
+    state: directory
+    mode: '0755'
+
+- name: Deploy nginx main configuration
+  ansible.builtin.template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+    mode: '0644'
+  notify: Reload nginx
+
+- name: Deploy conf.d configurations
+  ansible.builtin.copy:
+    src: "conf.d/{{ item }}"
+    dest: "/etc/nginx/conf.d/{{ item }}"
+    mode: '0644'
+  loop:
+    - 00-letsencrypt.conf
+    - ssl-params.conf
+  notify: Reload nginx
+
+- name: Deploy virtual host configuration
+  ansible.builtin.template:
+    src: domain.conf.j2
+    dest: "/etc/nginx/conf.d/{{ domain }}.conf"
+    mode: '0644'
+  notify: Reload nginx
+
+- name: Start and enable Nginx
+  ansible.builtin.systemd:
+    name: nginx
+    state: started
+    enabled: true
+
+# ============================================
+# GoAccess Installation & Configuration
+# ============================================
+
+- name: Install python3-passlib (htpasswd module requirement)
+  ansible.builtin.apt:
+    name: python3-passlib
+    state: present
+    lock_timeout: 300
+  when: ansible_facts['os_family'] == "Debian"
+
+- name: Add GoAccess GPG key (Debian/Ubuntu)
+  ansible.builtin.apt_key:
+    url: https://deb.goaccess.io/gnugpg.key
+    keyring: /usr/share/keyrings/goaccess.gpg
+    state: present
+  when: ansible_facts['os_family'] == "Debian"
+
+- name: Add GoAccess APT repository (Debian/Ubuntu)
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/goaccess.gpg] https://deb.goaccess.io/ {{ ansible_facts['distribution_release'] }} main"
+    state: present
+    filename: goaccess
+  when: ansible_facts['os_family'] == "Debian"
+
+- name: Install GoAccess (Debian/Ubuntu)
+  ansible.builtin.apt:
+    name: goaccess
+    state: present
+    update_cache: true
+    lock_timeout: 300
+  when: ansible_facts['os_family'] == "Debian"
+
+- name: Install EPEL (Red Hat/CentOS)
+  ansible.builtin.dnf:
+    name: epel-release
+    state: present
+  when: ansible_facts['os_family'] == "RedHat"
+
+- name: Install GoAccess (Red Hat/CentOS)
+  ansible.builtin.dnf:
+    name: goaccess
+    state: present
+  when: ansible_facts['os_family'] == "RedHat"
+
+# ============================================
+# GeoIP Installation & Configuration
+# ============================================
+
+- name: Install geoipupdate (MaxMind official tool)
+  ansible.builtin.apt:
+    name: geoipupdate
+    state: present
+    lock_timeout: 300
+  when: ansible_facts['os_family'] == "Debian"
+
+- name: Install libmaxminddb0 (GoAccess GeoIP dependency)
+  ansible.builtin.apt:
+    name: libmaxminddb0
+    state: present
+    lock_timeout: 300
+  when: ansible_facts['os_family'] == "Debian"
+
+- name: Create GeoIP database directory
+  ansible.builtin.file:
+    path: /var/lib/GeoIP
+    state: directory
+    mode: '0755'
+
+- name: Deploy GeoIP configuration
+  ansible.builtin.template:
+    src: GeoIP.conf.j2
+    dest: /etc/GeoIP.conf
+    mode: '0640'
+
+- name: Run initial GeoIP database download
+  ansible.builtin.command: geoipupdate
+  args:
+    creates: /var/lib/GeoIP/GeoLite2-City.mmdb
+
+- name: Set up weekly GeoIP database auto-update
+  ansible.builtin.cron:
+    name: "MaxMind GeoIP auto update"
+    minute: "0"
+    hour: "3"
+    weekday: "1"
+    job: "geoipupdate && systemctl restart goaccess"
+    user: root
+
+- name: Create GoAccess stats directory
+  ansible.builtin.file:
+    path: /var/www/html
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Create Nginx htpasswd file
+  community.general.htpasswd:
+    path: /etc/nginx/.htpasswd
+    name: "{{ goaccess_admin_user }}"
+    password: "{{ goaccess_admin_password }}"
+    owner: root
+    group: www-data
+    mode: '0640'
+
+- name: Deploy GoAccess wrapper script
+  ansible.builtin.template:
+    src: goaccess-wrapper.sh.j2
+    dest: /usr/local/bin/goaccess-wrapper.sh
+    mode: '0755'
+
+- name: Deploy GoAccess Systemd Service
+  ansible.builtin.template:
+    src: goaccess.service.j2
+    dest: /etc/systemd/system/goaccess.service
+    mode: '0644'
+
+- name: Reload Systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Start and enable GoAccess
+  ansible.builtin.systemd:
+    name: goaccess
+    state: started
+    enabled: true
