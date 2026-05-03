@@ -110,7 +110,7 @@
 # --------------------------------------------------------
 - name: Create certbot webroot directory
   ansible.builtin.file:
-    path: "{{ certbot_webroot_path }}"
+    path: "{{ certbot_webroot_path }}/.well-known/acme-challenge"
     state: directory
     mode: '0755'
     owner: www-data
