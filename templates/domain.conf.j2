@@ -3,6 +3,14 @@ server {
     listen [::]:80;
     server_name {{ domain }};
 
+    # --- [最高優先級：Let's Encrypt ACME 驗證] ---
+    # 必須在 Certbot 申請憑證時可訪問
+    location ^~ /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+        default_type "text/plain";
+        try_files $uri =404;
+    }
+
     # --- [第一優先順序：精確與長路徑匹配] ---
 
     # 📊 GoAccess 統計頁面 (精確匹配，避免被正則干擾)
