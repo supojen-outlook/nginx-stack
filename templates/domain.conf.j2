@@ -32,7 +32,7 @@ server {
     # 🚀 Admin 後台 (^~ 確保匹配後不再檢查正則) - 暫時禁用
     # location ^~ /admin/ {
     #     limit_req zone=general burst=20 nodelay;
-    #     proxy_pass http://127.0.0.1:{{ admin_port }}/;
+    #     proxy_pass http://127.0.0.1:8081/;
     #     proxy_set_header Host $host;
     #     proxy_buffering on;
     #     proxy_set_header X-Real-IP $remote_addr;
@@ -48,7 +48,7 @@ server {
     # 🚀 Client 前端 - 暫時禁用
     # location ^~ /shop/ {
     #     limit_req zone=general burst=20 nodelay;
-    #     proxy_pass http://127.0.0.1:{{ client_port }}/;
+    #     proxy_pass http://127.0.0.1:8082/;
     #     proxy_set_header Host $host;
     #     proxy_buffering on;
     #     proxy_set_header X-Real-IP $remote_addr;
@@ -60,7 +60,7 @@ server {
     # ⚙️ API - 暫時禁用
     # location ^~ /api/ {
     #     limit_req zone=api_limit burst=10 nodelay;
-    #     proxy_pass http://127.0.0.1:{{ api_port }};
+    #     proxy_pass http://127.0.0.1:8080;
     #     proxy_set_header Host $host;
     #     proxy_set_header X-Real-IP $remote_addr;
     #     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -86,7 +86,7 @@ server {
     # ✅ 靜態入口網站 - 暫時禁用
     # location / {
     #     limit_req zone=general burst=20 nodelay;
-    #     root {{ www_root | default('/var/www/html') }}/{{ domain }};
+    #     root /var/www/html/{{ domain }};
     #     index index.html;
     #     # 不存在就 404，不 fallback 到 index.html
     #     try_files $uri $uri/ =404;
