@@ -22,6 +22,15 @@
     path: "/etc/letsencrypt/live/{{ domain }}/fullchain.pem"
   register: cert_exists
 
+- name: 创建 certbot webroot 目录
+  ansible.builtin.file:
+    path: "{{ certbot_webroot_path }}/.well-known/acme-challenge"
+    state: directory
+    mode: '0755'
+    owner: www-data
+    group: www-data
+  when: not cert_exists.stat.exists
+
 - name: 确保 Nginx 已完全重启
   ansible.builtin.service:
     name: nginx
