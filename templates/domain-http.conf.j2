@@ -5,8 +5,7 @@ server {
 
     # --- [最高優先級：Let's Encrypt ACME 驗證] ---
     location ^~ /.well-known/acme-challenge/ {
-        alias /var/www/certbot/.well-known/acme-challenge/;
+        root /var/www/certbot;
         default_type "text/plain";
-        try_files $uri =404;
     }
 }
