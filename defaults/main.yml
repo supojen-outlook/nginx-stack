@@ -29,3 +29,8 @@ crowdsec_whitelist_ips: []  # 白名單 IP/CIDR 列表
 # 範例:
 #  - "192.168.1.0/24"  # 內網
 #  - "10.0.0.0/8"     # VPN
+
+# Certbot SSL Configuration
+certbot_enabled: true  # 是否啟用 SSL 憑證自動申請
+certbot_email: ""  # REQUIRED: Let's Encrypt 聯絡信箱
+certbot_webroot_path: /var/www/certbot  # ACME 驗證檔案路徑

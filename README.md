@@ -30,6 +30,7 @@
 | `maxmind_account_id` | 您的 MaxMind 帳號 ID | `123456` |
 | `maxmind_license_key` | 您的 MaxMind 授權金鑰 | `abc123xyz` |
 | `domain` | 您的網域，用於 WebSocket URL | `example.com` |
+| `certbot_email` | Let's Encrypt 聯絡信箱（申請 SSL 憑證用）| `admin@example.com` |
 
 ### 選填變數
 
@@ -47,6 +48,8 @@
 | `crowdsec_notifications_enabled` | `false` | 是否啟用 Discord 通知 |
 | `crowdsec_discord_webhook` | `""` | Discord Webhook URL |
 | `crowdsec_whitelist_ips` | `[]` | 白名單 IP 列表（例如 `["192.168.1.0/24"]`）|
+| `certbot_enabled` | `true` | 是否啟用 SSL 憑證自動申請 |
+| `certbot_webroot_path` | `/var/www/certbot` | ACME 驗證檔案路徑 |
 
 ## 安裝方式
 
@@ -97,6 +100,9 @@ Playbook 中使用**Role 名稱**（非 GitHub 網址）：
         crowdsec_whitelist_ips:
           - "192.168.1.0/24"
           - "10.0.0.0/8"
+        # SSL 憑證設定
+        certbot_enabled: true
+        certbot_email: "admin@example.com"
 ```
 
 **使用流程：**
@@ -149,6 +155,16 @@ server {
 | crowdsec | 入侵防禦系統引擎 | - |
 | crowdsec-firewall-bouncer | nftables 防火牆阻擋器 | - |
 | geoipupdate | 每週 GeoIP 資料庫更新 | - |
+| certbot | SSL 憑證自動申請與續期 | - |
+
+## SSL 憑證
+
+Role 會自動透過 Let's Encrypt 申請 SSL 憑證：
+- 使用 webroot 驗證模式
+- 每天 03:00 自動檢查並續期
+- 續期成功後自動重載 Nginx
+
+**注意**：確保您的網域已正確指向此伺服器，否則憑證申請會失敗。
 
 ## 存取分析報表
 
