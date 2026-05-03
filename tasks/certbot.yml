@@ -59,6 +59,26 @@
     mode: '0644'
   notify: Reload nginx
 
+- name: Fix SSL certificate permissions
+  ansible.builtin.file:
+    path: "/etc/letsencrypt/live/{{ domain }}"
+    state: directory
+    mode: '0755'
+    recurse: true
+    owner: root
+    group: root
+
+- name: Fix SSL certificate file permissions
+  ansible.builtin.file:
+    path: "{{ item }}"
+    mode: '0644'
+    owner: root
+    group: root
+  loop:
+    - "/etc/letsencrypt/live/{{ domain }}/fullchain.pem"
+    - "/etc/letsencrypt/live/{{ domain }}/privkey.pem"
+    - "/etc/letsencrypt/live/{{ domain }}/chain.pem"
+
 - name: 设置证书自动续期
   ansible.builtin.cron:
     name: "Certbot 自动续期"
