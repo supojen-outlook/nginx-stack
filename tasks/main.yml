@@ -128,7 +128,7 @@
 # --------------------------------------------------------
 - name: Deploy virtual host configuration (with SSL)
   ansible.builtin.template:
-    src: domain-ssl.conf.j2
+    src: domain.conf.j2
     dest: "/etc/nginx/conf.d/{{ domain }}.conf"
     mode: '0644'
   when:
