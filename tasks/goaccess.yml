@@ -1,40 +1,28 @@
 ---
 # GoAccess 安裝與配置
 
-# --------------------------------------------------------
-# 步驟 1：安裝 python3-passlib（htpasswd 模組需求）
-# --------------------------------------------------------
-- name: Install python3-passlib (htpasswd module requirement)
+- name: 安裝 python3-passlib (htpasswd 模組需要)
   ansible.builtin.apt:
     name: python3-passlib
     state: present
     lock_timeout: 300
   when: ansible_facts['os_family'] == "Debian"
 
-# --------------------------------------------------------
-# 步驟 2：新增 GoAccess GPG 金鑰
-# --------------------------------------------------------
-- name: Add GoAccess GPG key (Debian/Ubuntu)
+- name: 加入 GoAccess GPG key (Debian/Ubuntu)
   ansible.builtin.apt_key:
     url: https://deb.goaccess.io/gnugpg.key
     keyring: /usr/share/keyrings/goaccess.gpg
     state: present
   when: ansible_facts['os_family'] == "Debian"
 
-# --------------------------------------------------------
-# 步驟 3：新增 GoAccess APT 儲存庫
-# --------------------------------------------------------
-- name: Add GoAccess APT repository (Debian/Ubuntu)
+- name: 加入 GoAccess APT repository (Debian/Ubuntu)
   ansible.builtin.apt_repository:
     repo: "deb [signed-by=/usr/share/keyrings/goaccess.gpg] https://deb.goaccess.io/ {{ ansible_facts['distribution_release'] }} main"
     state: present
     filename: goaccess
   when: ansible_facts['os_family'] == "Debian"
 
-# --------------------------------------------------------
-# 步驟 4：安裝 GoAccess（Debian/Ubuntu）
-# --------------------------------------------------------
-- name: Install GoAccess (Debian/Ubuntu)
+- name: 安裝 GoAccess (Debian/Ubuntu)
   ansible.builtin.apt:
     name: goaccess
     state: present
@@ -42,90 +30,19 @@
     lock_timeout: 300
   when: ansible_facts['os_family'] == "Debian"
 
-# --------------------------------------------------------
-# 步驟 5：安裝 EPEL（Red Hat/CentOS）
-# --------------------------------------------------------
-- name: Install EPEL (Red Hat/CentOS)
+- name: 安裝 EPEL (Red Hat/CentOS)
   ansible.builtin.dnf:
     name: epel-release
     state: present
   when: ansible_facts['os_family'] == "RedHat"
 
-# --------------------------------------------------------
-# 步驟 6：安裝 GoAccess（Red Hat/CentOS）
-# --------------------------------------------------------
-- name: Install GoAccess (Red Hat/CentOS)
+- name: 安裝 GoAccess (Red Hat/CentOS)
   ansible.builtin.dnf:
     name: goaccess
     state: present
   when: ansible_facts['os_family'] == "RedHat"
 
-# ============================================
-# GeoIP 安裝與配置
-# ============================================
-
-# --------------------------------------------------------
-# 步驟 7：安裝 geoipupdate（MaxMind 官方工具）
-# --------------------------------------------------------
-- name: Install geoipupdate (MaxMind official tool)
-  ansible.builtin.apt:
-    name: geoipupdate
-    state: present
-    lock_timeout: 300
-  when: ansible_facts['os_family'] == "Debian"
-
-# --------------------------------------------------------
-# 步驟 8：安裝 libmaxminddb0（GoAccess GeoIP 依賴）
-# --------------------------------------------------------
-- name: Install libmaxminddb0 (GoAccess GeoIP dependency)
-  ansible.builtin.apt:
-    name: libmaxminddb0
-    state: present
-    lock_timeout: 300
-  when: ansible_facts['os_family'] == "Debian"
-
-# --------------------------------------------------------
-# 步驟 9：建立 GeoIP 資料庫目錄
-# --------------------------------------------------------
-- name: Create GeoIP database directory
-  ansible.builtin.file:
-    path: /var/lib/GeoIP
-    state: directory
-    mode: '0755'
-
-# --------------------------------------------------------
-# 步驟 10：部署 GeoIP 設定檔
-# --------------------------------------------------------
-- name: Deploy GeoIP configuration
-  ansible.builtin.template:
-    src: GeoIP.conf.j2
-    dest: /etc/GeoIP.conf
-    mode: '0640'
-
-# --------------------------------------------------------
-# 步驟 11：執行初始 GeoIP 資料庫下載
-# --------------------------------------------------------
-- name: Run initial GeoIP database download
-  ansible.builtin.command: geoipupdate
-  args:
-    creates: /var/lib/GeoIP/GeoLite2-City.mmdb
-
-# --------------------------------------------------------
-# 步驟 12：設定每週 GeoIP 資料庫自動更新
-# --------------------------------------------------------
-- name: Set up weekly GeoIP database auto-update
-  ansible.builtin.cron:
-    name: "MaxMind GeoIP auto update"
-    minute: "0"
-    hour: "3"
-    weekday: "1"
-    job: "geoipupdate && systemctl restart goaccess"
-    user: root
-
-# --------------------------------------------------------
-# 步驟 13：建立 GoAccess 統計目錄
-# --------------------------------------------------------
-- name: Create GoAccess stats directory
+- name: 建立 GoAccess 統計頁面目錄
   ansible.builtin.file:
     path: /var/www/html
     state: directory
@@ -133,10 +50,7 @@
     group: root
     mode: '0755'
 
-# --------------------------------------------------------
-# 步驟 14：建立 Nginx htpasswd 驗證檔
-# --------------------------------------------------------
-- name: Create Nginx htpasswd file
+- name: 建立 Nginx htpasswd 檔案
   community.general.htpasswd:
     path: /etc/nginx/.htpasswd
     name: "{{ goaccess_admin_user }}"
@@ -145,35 +59,23 @@
     group: www-data
     mode: '0640'
 
-# --------------------------------------------------------
-# 步驟 15：部署 GoAccess 包裝腳本
-# --------------------------------------------------------
-- name: Deploy GoAccess wrapper script
+- name: 部署 GoAccess 啟動腳本
   ansible.builtin.template:
     src: goaccess-wrapper.sh.j2
     dest: /usr/local/bin/goaccess-wrapper.sh
     mode: '0755'
 
-# --------------------------------------------------------
-# 步驟 16：部署 GoAccess Systemd 服務
-# --------------------------------------------------------
-- name: Deploy GoAccess Systemd Service
+- name: 部署 GoAccess Systemd Service
   ansible.builtin.template:
     src: goaccess.service.j2
     dest: /etc/systemd/system/goaccess.service
     mode: '0644'
 
-# --------------------------------------------------------
-# 步驟 17：重新載入 Systemd
-# --------------------------------------------------------
-- name: Reload Systemd
+- name: 重新載入 Systemd
   ansible.builtin.systemd:
     daemon_reload: true
 
-# --------------------------------------------------------
-# 步驟 18：啟動並啟用 GoAccess 服務
-# --------------------------------------------------------
-- name: Start and enable GoAccess
+- name: 啟動並啟用 GoAccess
   ansible.builtin.systemd:
     name: goaccess
     state: started

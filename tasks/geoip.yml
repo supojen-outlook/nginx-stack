@@ -1,0 +1,42 @@
+---
+# GeoIP 安裝與配置
+
+- name: 安裝 geoipupdate (MaxMind 官方工具)
+  ansible.builtin.apt:
+    name: geoipupdate
+    state: present
+    lock_timeout: 300
+  when: ansible_facts['os_family'] == "Debian"
+
+- name: 安裝 libmaxminddb0 (GoAccess GeoIP 依賴)
+  ansible.builtin.apt:
+    name: libmaxminddb0
+    state: present
+    lock_timeout: 300
+  when: ansible_facts['os_family'] == "Debian"
+
+- name: 建立 GeoIP 資料庫目錄
+  ansible.builtin.file:
+    path: /var/lib/GeoIP
+    state: directory
+    mode: '0755'
+
+- name: 部署 GeoIP 設定檔
+  ansible.builtin.template:
+    src: GeoIP.conf.j2
+    dest: /etc/GeoIP.conf
+    mode: '0640'
+
+- name: 執行首次 GeoIP 資料庫下載
+  ansible.builtin.command: geoipupdate
+  args:
+    creates: /var/lib/GeoIP/GeoLite2-City.mmdb
+
+- name: 設定每週自動更新 GeoIP 資料庫
+  ansible.builtin.cron:
+    name: "MaxMind GeoIP 自動更新"
+    minute: "0"
+    hour: "3"
+    weekday: "1"
+    job: "geoipupdate && systemctl restart goaccess"
+    user: root

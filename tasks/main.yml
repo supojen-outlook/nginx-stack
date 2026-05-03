@@ -18,6 +18,11 @@
   ansible.builtin.import_tasks: goaccess.yml
   tags: goaccess
 
+# 3.5. 安裝並配置 GeoIP
+- name: Import GeoIP tasks
+  ansible.builtin.import_tasks: geoip.yml
+  tags: geoip
+
 # 4. 安裝並配置 CrowdSec
 - name: Import CrowdSec tasks
   ansible.builtin.import_tasks: crowdsec.yml
