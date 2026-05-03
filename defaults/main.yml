@@ -26,6 +26,8 @@ crowdsec_capi_enroll_key: ""  # CAPI 註冊金鑰 (從 console.crowdsec.net 取�
 crowdsec_notifications_enabled: false  # 是否啟用 Discord 通知
 crowdsec_discord_webhook: ""  # Discord Webhook URL (secrets 中設定)
 crowdsec_whitelist_ips: []  # 白名單 IP/CIDR 列表
+crowdsec_nginx_access_log: /var/log/nginx/access.log  # Nginx 存取日誌路徑
+crowdsec_nginx_error_log: /var/log/nginx/error.log  # Nginx 錯誤日誌路徑
 # 範例:
 #  - "192.168.1.0/24"  # 內網
 #  - "10.0.0.0/8"     # VPN
