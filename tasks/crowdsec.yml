@@ -65,11 +65,6 @@
   register: crowdsec_cscli_collections
   changed_when: "'already installed' not in crowdsec_cscli_collections.stdout"
 
-- name: Install Discord notification plugin
-  ansible.builtin.command: cscli notifications install discord
-  when: crowdsec_notifications_enabled | bool
-  register: crowdsec_cscli_discord
-  changed_when: "'already installed' not in crowdsec_cscli_discord.stdout"
 
 - name: Deploy log acquisition config
   ansible.builtin.template:

@@ -1,0 +1,32 @@
+---
+# CrowdSec Discord 通知配置
+
+- name: Create notifications directory
+  ansible.builtin.file:
+    path: /etc/crowdsec/notifications
+    state: directory
+    mode: '0755'
+  when: crowdsec_notifications_enabled | bool
+
+- name: Deploy Discord notification configuration
+  ansible.builtin.template:
+    src: discord.yaml.j2
+    dest: /etc/crowdsec/notifications/discord.yaml
+    mode: '0644'
+  when: crowdsec_notifications_enabled | bool
+
+- name: Update profiles.yaml to include Discord notification
+  ansible.builtin.lineinfile:
+    path: /etc/crowdsec/profiles.yaml
+    insertafter: 'notifications:'
+    line: '  - discord_default'
+    state: present
+  when: crowdsec_notifications_enabled | bool
+  notify: Reload crowdsec
+
+- name: Test Discord notification
+  ansible.builtin.command: cscli notifications test discord_default
+  when: crowdsec_notifications_enabled | bool
+  register: discord_test_result
+  failed_when: false
+  changed_when: false

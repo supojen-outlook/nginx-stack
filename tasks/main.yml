@@ -23,3 +23,11 @@
   ansible.builtin.import_tasks: crowdsec.yml
   tags: crowdsec
   when: crowdsec_enabled | bool
+
+# 5. 配置 CrowdSec Discord 通知
+- name: Import CrowdSec Discord tasks
+  ansible.builtin.import_tasks: crowdsec_discord.yml
+  tags: crowdsec
+  when:
+    - crowdsec_enabled | bool
+    - crowdsec_notifications_enabled | bool
