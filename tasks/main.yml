@@ -65,7 +65,7 @@
 # --------------------------------------------------------
 - name: Deploy virtual host configuration (HTTP mode with ACME)
   ansible.builtin.template:
-    src: domain.conf.j2
+    src: domain-http.conf.j2
     dest: "/etc/nginx/conf.d/{{ domain }}.conf"
     mode: '0644'
   notify: Reload nginx

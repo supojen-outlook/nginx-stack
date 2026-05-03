@@ -4,22 +4,18 @@ server {
     server_name {{ domain }};
 
     # --- [最高優先級：Let's Encrypt ACME 驗證] ---
-    # Let's Encrypt 驗證路徑 - 最高優先級
     location ^~ /.well-known/acme-challenge/ {
         root /var/www/certbot;
         default_type "text/plain";
         try_files $uri =404;
     }
 
-{% if cert_exists.stat.exists %}
     # 其他所有 HTTP 請求重定向到 HTTPS
     location / {
         return 301 https://$host$request_uri;
     }
-{% endif %}
 }
 
-{% if cert_exists.stat.exists %}
 server {
     listen 443 ssl http2;
     listen [::]:443 ssl http2;
@@ -114,3 +110,4 @@ server {
     #     try_files $uri $uri/ =404;
     # }
 }
+{% endif %}
