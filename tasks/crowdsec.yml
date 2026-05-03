@@ -100,7 +100,8 @@
   loop: "{{ crowdsec_whitelist_ips }}"
   when: crowdsec_whitelist_ips | length > 0
   register: crowdsec_whitelist_add
-  changed_when: "'already exists' not in crowdsec_whitelist_add.stdout | default('')"
+  failed_when: "'is not a valid ip' in crowdsec_whitelist_add.stderr | default('')"
+  changed_when: crowdsec_whitelist_add.rc == 0
 
 - name: Start and enable CrowdSec
   ansible.builtin.systemd:
