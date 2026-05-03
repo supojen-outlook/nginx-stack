@@ -59,23 +59,6 @@
     mode: '0644'
   notify: Reload nginx
 
-- name: Secure SSL private key permissions
-  ansible.builtin.file:
-    path: "/etc/letsencrypt/live/{{ domain }}/privkey.pem"
-    mode: '0600'
-    owner: root
-    group: root
-
-- name: Set public SSL certificate permissions
-  ansible.builtin.file:
-    path: "{{ item }}"
-    mode: '0644'
-    owner: root
-    group: root
-  loop:
-    - "/etc/letsencrypt/live/{{ domain }}/fullchain.pem"
-    - "/etc/letsencrypt/live/{{ domain }}/chain.pem"
-
 - name: 设置证书自动续期
   ansible.builtin.cron:
     name: "Certbot 自动续期"
