@@ -40,3 +40,4 @@
     weekday: "1"
     job: "geoipupdate && systemctl restart goaccess"
     user: root
+  notify: Reload nginx

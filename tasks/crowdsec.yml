@@ -113,3 +113,4 @@
     name: crowdsec-firewall-bouncer
     state: started
     enabled: true
+  notify: Reload nginx
