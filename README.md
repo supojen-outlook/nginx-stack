@@ -92,7 +92,11 @@ Playbook 中使用**Role 名稱**（非 GitHub 網址）：
         # CrowdSec 設定（選填）
         crowdsec_enabled: true
         crowdsec_capi_enabled: false
-        crowdsec_notifications_enabled: false
+        crowdsec_notifications_enabled: true
+        crowdsec_discord_webhook: "{{ vault_discord_webhook }}"
+        crowdsec_whitelist_ips:
+          - "192.168.1.0/24"
+          - "10.0.0.0/8"
 ```
 
 **使用流程：**
