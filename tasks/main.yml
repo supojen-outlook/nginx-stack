@@ -113,6 +113,8 @@
     path: "{{ certbot_webroot_path }}"
     state: directory
     mode: '0755'
+    owner: www-data
+    group: www-data
   when: certbot_enabled | bool
 
 # --------------------------------------------------------
