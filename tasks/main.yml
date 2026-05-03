@@ -53,17 +53,7 @@
   notify: Reload nginx
 
 # --------------------------------------------------------
-# 步驟 6：部署虛擬主機設定（HTTP 模式）
-# --------------------------------------------------------
-- name: Deploy virtual host configuration (HTTP mode)
-  ansible.builtin.template:
-    src: domain.conf.j2
-    dest: "/etc/nginx/conf.d/{{ domain }}.conf"
-    mode: '0644'
-  notify: Reload nginx
-
-# --------------------------------------------------------
-# 步驟 7：啟動並啟用 Nginx 服務
+# 步驟 6：啟動並啟用 Nginx 服務
 # --------------------------------------------------------
 - name: Start and enable Nginx
   ansible.builtin.systemd:
@@ -76,7 +66,7 @@
 # ============================================
 
 # --------------------------------------------------------
-# 步驟 8：安裝 Certbot（Debian/Ubuntu）
+# 步驟 7：安裝 Certbot（Debian/Ubuntu）
 # --------------------------------------------------------
 - name: Install Certbot (Debian/Ubuntu)
   ansible.builtin.apt:
@@ -87,7 +77,7 @@
     - certbot_enabled | bool
 
 # --------------------------------------------------------
-# 步驟 9：安裝 Certbot（Red Hat/CentOS）
+# 步驟 8：安裝 Certbot（Red Hat/CentOS）
 # --------------------------------------------------------
 - name: Install Certbot (Red Hat/CentOS)
   ansible.builtin.dnf:
@@ -98,7 +88,7 @@
     - certbot_enabled | bool
 
 # --------------------------------------------------------
-# 步驟 10：建立 Certbot webroot 目錄
+# 步驟 9：建立 Certbot webroot 目錄
 # --------------------------------------------------------
 - name: Create certbot webroot directory
   ansible.builtin.file:
@@ -108,7 +98,7 @@
   when: certbot_enabled | bool
 
 # --------------------------------------------------------
-# 步驟 11：檢查 SSL 憑證是否已存在
+# 步驟 10：檢查 SSL 憑證是否已存在
 # --------------------------------------------------------
 - name: Check if SSL certificate already exists
   ansible.builtin.stat:
@@ -117,7 +107,7 @@
   when: certbot_enabled | bool
 
 # --------------------------------------------------------
-# 步驟 12：申請 SSL 憑證（webroot 模式）
+# 步驟 11：申請 SSL 憑證（webroot 模式）
 # --------------------------------------------------------
 - name: Request SSL certificate (webroot mode)
   ansible.builtin.command: >
@@ -135,9 +125,9 @@
   register: certbot_result
 
 # --------------------------------------------------------
-# 步驟 13：重新部署虛擬主機設定（啟用 SSL）
+# 步驟 12：部署虛擬主機設定（啟用 SSL）
 # --------------------------------------------------------
-- name: Re-deploy virtual host configuration (with SSL)
+- name: Deploy virtual host configuration (with SSL)
   ansible.builtin.template:
     src: domain-ssl.conf.j2
     dest: "/etc/nginx/conf.d/{{ domain }}.conf"
@@ -148,7 +138,7 @@
   notify: Reload nginx
 
 # --------------------------------------------------------
-# 步驟 14：設定憑證自動續期 Cron
+# 步驟 13：設定憑證自動續期 Cron
 # --------------------------------------------------------
 - name: Setup certificate auto-renewal cron
   ansible.builtin.cron:
@@ -163,7 +153,7 @@
 # ============================================
 
 # --------------------------------------------------------
-# 步驟 15：安裝 python3-passlib（htpasswd 模組需求）
+# 步驟 14：安裝 python3-passlib（htpasswd 模組需求）
 # --------------------------------------------------------
 - name: Install python3-passlib (htpasswd module requirement)
   ansible.builtin.apt:
@@ -173,7 +163,7 @@
   when: ansible_facts['os_family'] == "Debian"
 
 # --------------------------------------------------------
-# 步驟 16：新增 GoAccess GPG 金鑰
+# 步驟 15：新增 GoAccess GPG 金鑰
 # --------------------------------------------------------
 - name: Add GoAccess GPG key (Debian/Ubuntu)
   ansible.builtin.apt_key:
@@ -183,7 +173,7 @@
   when: ansible_facts['os_family'] == "Debian"
 
 # --------------------------------------------------------
-# 步驟 17：新增 GoAccess APT 儲存庫
+# 步驟 16：新增 GoAccess APT 儲存庫
 # --------------------------------------------------------
 - name: Add GoAccess APT repository (Debian/Ubuntu)
   ansible.builtin.apt_repository:
@@ -193,7 +183,7 @@
   when: ansible_facts['os_family'] == "Debian"
 
 # --------------------------------------------------------
-# 步驟 18：安裝 GoAccess（Debian/Ubuntu）
+# 步驟 17：安裝 GoAccess（Debian/Ubuntu）
 # --------------------------------------------------------
 - name: Install GoAccess (Debian/Ubuntu)
   ansible.builtin.apt:
@@ -204,7 +194,7 @@
   when: ansible_facts['os_family'] == "Debian"
 
 # --------------------------------------------------------
-# 步驟 19：安裝 EPEL（Red Hat/CentOS）
+# 步驟 18：安裝 EPEL（Red Hat/CentOS）
 # --------------------------------------------------------
 - name: Install EPEL (Red Hat/CentOS)
   ansible.builtin.dnf:
@@ -213,7 +203,7 @@
   when: ansible_facts['os_family'] == "RedHat"
 
 # --------------------------------------------------------
-# 步驟 20：安裝 GoAccess（Red Hat/CentOS）
+# 步驟 19：安裝 GoAccess（Red Hat/CentOS）
 # --------------------------------------------------------
 - name: Install GoAccess (Red Hat/CentOS)
   ansible.builtin.dnf:
@@ -226,7 +216,7 @@
 # ============================================
 
 # --------------------------------------------------------
-# 步驟 21：安裝 geoipupdate（MaxMind 官方工具）
+# 步驟 20：安裝 geoipupdate（MaxMind 官方工具）
 # --------------------------------------------------------
 - name: Install geoipupdate (MaxMind official tool)
   ansible.builtin.apt:
@@ -236,7 +226,7 @@
   when: ansible_facts['os_family'] == "Debian"
 
 # --------------------------------------------------------
-# 步驟 22：安裝 libmaxminddb0（GoAccess GeoIP 依賴）
+# 步驟 21：安裝 libmaxminddb0（GoAccess GeoIP 依賴）
 # --------------------------------------------------------
 - name: Install libmaxminddb0 (GoAccess GeoIP dependency)
   ansible.builtin.apt:
@@ -246,7 +236,7 @@
   when: ansible_facts['os_family'] == "Debian"
 
 # --------------------------------------------------------
-# 步驟 23：建立 GeoIP 資料庫目錄
+# 步驟 22：建立 GeoIP 資料庫目錄
 # --------------------------------------------------------
 - name: Create GeoIP database directory
   ansible.builtin.file:
@@ -255,7 +245,7 @@
     mode: '0755'
 
 # --------------------------------------------------------
-# 步驟 24：部署 GeoIP 設定檔
+# 步驟 23：部署 GeoIP 設定檔
 # --------------------------------------------------------
 - name: Deploy GeoIP configuration
   ansible.builtin.template:
@@ -264,7 +254,7 @@
     mode: '0640'
 
 # --------------------------------------------------------
-# 步驟 25：執行初始 GeoIP 資料庫下載
+# 步驟 24：執行初始 GeoIP 資料庫下載
 # --------------------------------------------------------
 - name: Run initial GeoIP database download
   ansible.builtin.command: geoipupdate
@@ -272,7 +262,7 @@
     creates: /var/lib/GeoIP/GeoLite2-City.mmdb
 
 # --------------------------------------------------------
-# 步驟 26：設定每週 GeoIP 資料庫自動更新
+# 步驟 25：設定每週 GeoIP 資料庫自動更新
 # --------------------------------------------------------
 - name: Set up weekly GeoIP database auto-update
   ansible.builtin.cron:
@@ -284,7 +274,7 @@
     user: root
 
 # --------------------------------------------------------
-# 步驟 27：建立 GoAccess 統計目錄
+# 步驟 26：建立 GoAccess 統計目錄
 # --------------------------------------------------------
 - name: Create GoAccess stats directory
   ansible.builtin.file:
@@ -295,7 +285,7 @@
     mode: '0755'
 
 # --------------------------------------------------------
-# 步驟 28：建立 Nginx htpasswd 驗證檔
+# 步驟 27：建立 Nginx htpasswd 驗證檔
 # --------------------------------------------------------
 - name: Create Nginx htpasswd file
   community.general.htpasswd:
@@ -307,7 +297,7 @@
     mode: '0640'
 
 # --------------------------------------------------------
-# 步驟 29：部署 GoAccess 包裝腳本
+# 步驟 28：部署 GoAccess 包裝腳本
 # --------------------------------------------------------
 - name: Deploy GoAccess wrapper script
   ansible.builtin.template:
@@ -316,7 +306,7 @@
     mode: '0755'
 
 # --------------------------------------------------------
-# 步驟 30：部署 GoAccess Systemd 服務
+# 步驟 29：部署 GoAccess Systemd 服務
 # --------------------------------------------------------
 - name: Deploy GoAccess Systemd Service
   ansible.builtin.template:
@@ -325,14 +315,14 @@
     mode: '0644'
 
 # --------------------------------------------------------
-# 步驟 31：重新載入 Systemd
+# 步驟 30：重新載入 Systemd
 # --------------------------------------------------------
 - name: Reload Systemd
   ansible.builtin.systemd:
     daemon_reload: true
 
 # --------------------------------------------------------
-# 步驟 32：啟動並啟用 GoAccess 服務
+# 步驟 31：啟動並啟用 GoAccess 服務
 # --------------------------------------------------------
 - name: Start and enable GoAccess
   ansible.builtin.systemd:
@@ -345,7 +335,7 @@
 # ============================================
 
 # --------------------------------------------------------
-# 步驟 33：安裝 CrowdSec 及相關元件
+# 步驟 32：安裝 CrowdSec 及相關元件
 # --------------------------------------------------------
 - name: Install CrowdSec
   when: crowdsec_enabled | bool

@@ -3,18 +3,8 @@ server {
     listen [::]:80;
     server_name {{ domain }};
 
-    # --- [最高優先級：Let's Encrypt ACME 驗證] ---
-    # 續期時需要透過 HTTP 訪問，不能被重定向到 HTTPS
-    location ^~ /.well-known/acme-challenge/ {
-        root /var/www/certbot;
-        default_type "text/plain";
-        try_files $uri =404;
-    }
-
-    # 其他請求重定向到 HTTPS
-    location / {
-        return 301 https://$server_name$request_uri;
-    }
+    # 重定向 HTTP 到 HTTPS
+    return 301 https://$server_name$request_uri;
 }
 
 server {
