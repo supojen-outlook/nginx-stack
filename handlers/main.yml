@@ -9,12 +9,3 @@
     name: nginx
     state: reloaded
 
-- name: Reload crowdsec
-  ansible.builtin.systemd:
-    name: crowdsec
-    state: reloaded
-
-- name: Restart crowdsec
-  ansible.builtin.systemd:
-    name: crowdsec
-    state: restarted

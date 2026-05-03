@@ -7,7 +7,6 @@
 - **Nginx 網頁伺服器**：最新版本，配置優化
 - **GoAccess 分析**：即時網頁日誌分析器，支援 WebSocket 即時更新
 - **GeoIP 整合**：MaxMind GeoLite2-City 資料庫，分析訪客地理位置
-- **CrowdSec 安全防護**：自動入侵防禦系統，整合 nftables 防火牆阻擋惡意 IP
 - **速率限制**：內建防護，抵禦濫用和 DDoS 攻擊
 - **SSL 優化**：現代 TLS 配置，支援會話快取
 - **Let's Encrypt 就緒**：預設配置 ACME 憑證驗證
@@ -18,7 +17,6 @@
 - Ansible 2.9+
 - 目標作業系統：Ubuntu 24.04/22.04、Debian 12/11 或 RHEL 8/9
 - MaxMind GeoIP 帳號（免費）用於 GeoLite2 資料庫
-- CrowdSec 控制台帳號（選填）用於 CAPI 整合
 
 ## Role 變數
 
@@ -42,12 +40,6 @@
 | `goaccess_admin_user` | `admin` | GoAccess 使用者名稱 |
 | `goaccess_stats_path` | `/var/www/html/stats.html` | GoAccess 輸出路徑 |
 | `goaccess_ws_port` | `7890` | WebSocket 連接埠 |
-| `crowdsec_enabled` | `true` | 是否啟用 CrowdSec |
-| `crowdsec_capi_enabled` | `false` | 是否啟用 CAPI 控制台 |
-| `crowdsec_capi_enroll_key` | `""` | CAPI 註冊金鑰（從 console.crowdsec.net 取得）|
-| `crowdsec_notifications_enabled` | `false` | 是否啟用 Discord 通知 |
-| `crowdsec_discord_webhook` | `""` | Discord Webhook URL |
-| `crowdsec_whitelist_ips` | `[]` | 白名單 IP 列表（例如 `["192.168.1.0/24"]`）|
 | `certbot_enabled` | `true` | 是否啟用 SSL 憑證自動申請 |
 | `certbot_webroot_path` | `/var/www/certbot` | ACME 驗證檔案路徑 |
 
@@ -92,14 +84,6 @@ Playbook 中使用**Role 名稱**（非 GitHub 網址）：
         goaccess_admin_password: "{{ vault_goaccess_password }}"
         maxmind_account_id: "123456"
         maxmind_license_key: "{{ vault_maxmind_key }}"
-        # CrowdSec 設定（選填）
-        crowdsec_enabled: true
-        crowdsec_capi_enabled: false
-        crowdsec_notifications_enabled: true
-        crowdsec_discord_webhook: "{{ vault_discord_webhook }}"
-        crowdsec_whitelist_ips:
-          - "192.168.1.0/24"
-          - "10.0.0.0/8"
         # SSL 憑證設定
         certbot_enabled: true
         certbot_email: "admin@example.com"
@@ -152,8 +136,6 @@ server {
 |---------|-------------|------|
 | nginx | 網頁伺服器 | 80, 443 |
 | goaccess | 即時日誌分析器 | 7890 (WebSocket) |
-| crowdsec | 入侵防禦系統引擎 | - |
-| crowdsec-firewall-bouncer | nftables 防火牆阻擋器 | - |
 | geoipupdate | 每週 GeoIP 資料庫更新 | - |
 | certbot | SSL 憑證自動申請與續期 | - |
 
