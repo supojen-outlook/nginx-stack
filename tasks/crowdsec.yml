@@ -1,169 +1,120 @@
 ---
 # CrowdSec 安裝與配置
 
-# --------------------------------------------------------
-# 步驟 1：安裝 CrowdSec 及相關元件
-# --------------------------------------------------------
-- name: Install CrowdSec
-  when: crowdsec_enabled | bool
-  block:
-    - name: Install dependencies (Debian/Ubuntu)
-      ansible.builtin.apt:
-        name:
-          - curl
-          - gnupg
-          - nftables
-        state: present
-        lock_timeout: 300
-      when: ansible_facts['os_family'] == "Debian"
+- name: Install dependencies (Debian/Ubuntu)
+  ansible.builtin.apt:
+    name:
+      - curl
+      - gnupg
+      - nftables
+    state: present
+  when: ansible_facts['os_family'] == "Debian"
 
-    - name: Install dependencies (Red Hat/CentOS)
-      ansible.builtin.dnf:
-        name:
-          - curl
-          - gnupg
-          - nftables
-        state: present
-      when: ansible_facts['os_family'] == "RedHat"
+- name: Install dependencies (Red Hat/CentOS)
+  ansible.builtin.dnf:
+    name:
+      - curl
+      - gnupg
+      - nftables
+    state: present
+  when: ansible_facts['os_family'] == "RedHat"
 
-    - name: Add CrowdSec GPG key
-      ansible.builtin.apt_key:
-        url: https://packagecloud.io/crowdsec/crowdsec/gpgkey
-        state: present
-      when: ansible_facts['os_family'] == "Debian"
+- name: Download CrowdSec install script
+  ansible.builtin.get_url:
+    url: https://install.crowdsec.net
+    dest: /tmp/crowdsec_install.sh
+    mode: '0755'
+  when: ansible_facts['os_family'] == "Debian"
 
-    - name: Add CrowdSec repository
-      ansible.builtin.apt_repository:
-        repo: "deb https://packagecloud.io/crowdsec/crowdsec/any/ any main"
-        state: present
-        filename: crowdsec
-      when: ansible_facts['os_family'] == "Debian"
+- name: Execute CrowdSec install script
+  ansible.builtin.command: /tmp/crowdsec_install.sh
+  args:
+    creates: /etc/apt/sources.list.d/crowdsec.list
+  when: ansible_facts['os_family'] == "Debian"
 
-    - name: Install CrowdSec (Debian/Ubuntu)
-      ansible.builtin.apt:
-        name: crowdsec
-        state: present
-        update_cache: true
-        lock_timeout: 300
-      when: ansible_facts['os_family'] == "Debian"
+- name: Install CrowdSec engine (Debian/Ubuntu)
+  ansible.builtin.apt:
+    name: crowdsec
+    state: present
+    update_cache: true
+  when: ansible_facts['os_family'] == "Debian"
 
-    - name: Install CrowdSec (Red Hat/CentOS)
-      ansible.builtin.dnf:
-        name: crowdsec
-        state: present
-      when: ansible_facts['os_family'] == "RedHat"
+- name: Install CrowdSec engine (Red Hat/CentOS)
+  ansible.builtin.dnf:
+    name: crowdsec
+    state: present
+  when: ansible_facts['os_family'] == "RedHat"
 
-# --------------------------------------------------------
-# 步驟 2：配置 CrowdSec
-# --------------------------------------------------------
-- name: Configure CrowdSec
-  when: crowdsec_enabled | bool
-  block:
-    - name: Deploy CrowdSec configuration
-      ansible.builtin.template:
-        src: crowdsec-config.yaml.j2
-        dest: /etc/crowdsec/config.yaml
-        mode: '0644'
-      notify: Restart crowdsec
+- name: Install Firewall Bouncer (nftables) (Debian)
+  ansible.builtin.apt:
+    name: crowdsec-firewall-bouncer-nftables
+    state: present
+  when: ansible_facts['os_family'] == "Debian"
 
-    - name: Deploy CrowdSec acquis configuration
-      ansible.builtin.template:
-        src: acquis.yaml.j2
-        dest: /etc/crowdsec/acquis.yaml
-        mode: '0644'
-      notify: Restart crowdsec
+- name: Install Firewall Bouncer (nftables) (Red Hat)
+  ansible.builtin.dnf:
+    name: crowdsec-firewall-bouncer-nftables
+    state: present
+  when: ansible_facts['os_family'] == "RedHat"
 
-# --------------------------------------------------------
-# 步驟 3：啟動並啟用 CrowdSec
-# --------------------------------------------------------
+- name: Install required collections
+  ansible.builtin.command: cscli collections install {{ item }}
+  loop:
+    - crowdsecurity/nginx
+    - crowdsecurity/linux
+  register: crowdsec_cscli_collections
+  changed_when: "'already installed' not in crowdsec_cscli_collections.stdout"
+
+- name: Install Discord notification plugin
+  ansible.builtin.command: cscli notifications install discord
+  when: crowdsec_notifications_enabled | bool
+  register: crowdsec_cscli_discord
+  changed_when: "'already installed' not in crowdsec_cscli_discord.stdout"
+
+- name: Deploy log acquisition config
+  ansible.builtin.template:
+    src: acquis.yaml.j2
+    dest: /etc/crowdsec/acquis.yaml
+    mode: '0644'
+  notify: Reload crowdsec
+
+- name: Deploy notification config
+  ansible.builtin.template:
+    src: profiles.yaml.j2
+    dest: /etc/crowdsec/profiles.yaml
+    mode: '0644'
+  when: crowdsec_notifications_enabled | bool
+  notify: Reload crowdsec
+
+- name: Enroll CAPI (CrowdSec console)
+  ansible.builtin.command: cscli console enroll {{ crowdsec_capi_enroll_key }}
+  when:
+    - crowdsec_capi_enabled | bool
+    - crowdsec_capi_enroll_key | length > 0
+  register: crowdsec_capi_enroll
+  changed_when: "'already enrolled' not in crowdsec_capi_enroll.stdout | default('')"
+
+- name: Enable CAPI
+  ansible.builtin.command: cscli console enable
+  when: crowdsec_capi_enabled | bool
+  register: crowdsec_capi_enable
+  changed_when: crowdsec_capi_enable.rc == 0
+
+- name: Configure whitelist IPs
+  ansible.builtin.command: cscli decisions add --ip {{ item }} --type whitelist --duration 99999h
+  loop: "{{ crowdsec_whitelist_ips }}"
+  when: crowdsec_whitelist_ips | length > 0
+  register: crowdsec_whitelist_add
+  changed_when: "'already exists' not in crowdsec_whitelist_add.stdout | default('')"
+
 - name: Start and enable CrowdSec
   ansible.builtin.systemd:
     name: crowdsec
     state: started
     enabled: true
-  when: crowdsec_enabled | bool
 
-# --------------------------------------------------------
-# 步驟 4：安裝 CrowdSec Bouncers
-# --------------------------------------------------------
-- name: Install CrowdSec Bouncers
-  when: crowdsec_enabled | bool
-  block:
-    - name: Install CrowdSec Firewall Bouncer
-      ansible.builtin.apt:
-        name: crowdsec-firewall-bouncer
-        state: present
-        lock_timeout: 300
-      when: ansible_facts['os_family'] == "Debian"
-
-    - name: Install CrowdSec Firewall Bouncer (Red Hat/CentOS)
-      ansible.builtin.dnf:
-        name: crowdsec-firewall-bouncer
-        state: present
-      when: ansible_facts['os_family'] == "RedHat"
-
-# --------------------------------------------------------
-# 步驟 5：配置 CrowdSec Bouncers
-# --------------------------------------------------------
-- name: Configure CrowdSec Bouncers
-  when: crowdsec_enabled | bool
-  block:
-    - name: Deploy Firewall Bouncer configuration
-      ansible.builtin.template:
-        src: crowdsec-firewall-bouncer.yaml.j2
-        dest: /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
-        mode: '0644'
-      notify: Restart crowdsec-firewall-bouncer
-
-# --------------------------------------------------------
-# 步驟 6：啟動並啟用 CrowdSec Bouncers
-# --------------------------------------------------------
-- name: Start and enable CrowdSec Firewall Bouncer
+- name: Start and enable Firewall Bouncer
   ansible.builtin.systemd:
     name: crowdsec-firewall-bouncer
     state: started
     enabled: true
-  when: crowdsec_enabled | bool
-
-# --------------------------------------------------------
-# 步驟 7：配置 CrowdSec CAPI（可選）
-# --------------------------------------------------------
-- name: Configure CrowdSec CAPI
-  when:
-    - crowdsec_enabled | bool
-    - crowdsec_capi_enabled | bool
-  block:
-    - name: Enroll in CrowdSec CAPI
-      ansible.builtin.command: >
-        cscli enroll
-        {{ crowdsec_capi_enroll_key }}
-      args:
-        creates: /etc/crowdsec/local/api_credentials.yaml
-      when: 
-        - crowdsec_capi_enroll_key | length > 0
-        - crowdsec_capi_enroll_key is defined
-
-# --------------------------------------------------------
-# 步驟 8：配置 CrowdSec 通知（可選）
-# --------------------------------------------------------
-- name: Configure CrowdSec Notifications
-  when:
-    - crowdsec_enabled | bool
-    - crowdsec_notifications_enabled | bool
-  block:
-    - name: Deploy Discord notification configuration
-      ansible.builtin.template:
-        src: crowdsec-discord.yaml.j2
-        dest: /etc/crowdsec/plugins/discord.yaml
-        mode: '0644'
-      when: crowdsec_discord_webhook | length > 0
-      notify: Restart crowdsec
-
-    - name: Configure CrowdSec whitelist IPs
-      ansible.builtin.lineinfile:
-        path: /etc/crowdsec/parsers/s02-enrich/whitelists.yaml
-        line: "    - {{ item }}"
-        insertafter: "whitelists:"
-      loop: "{{ crowdsec_whitelist_ips }}"
-      when: crowdsec_whitelist_ips | length > 0
-      notify: Restart crowdsec
