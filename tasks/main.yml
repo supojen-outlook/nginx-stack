@@ -48,6 +48,7 @@
     dest: "/etc/nginx/conf.d/{{ item }}"
     mode: '0644'
   loop:
+    - 00-letsencrypt.conf
     - ssl-params.conf
   notify: Reload nginx
 
