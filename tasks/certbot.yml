@@ -57,7 +57,6 @@
     src: domain.conf.j2
     dest: "/etc/nginx/conf.d/{{ domain }}.conf"
     mode: '0644'
-  when: not cert_exists.stat.exists
   notify: Reload nginx
 
 - name: 设置证书自动续期
