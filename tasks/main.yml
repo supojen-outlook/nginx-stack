@@ -62,12 +62,21 @@
     mode: '0644'
   notify: Reload nginx
 
+# --------------------------------------------------------
+# 步驟 7：啟動並啟用 Nginx 服務（必須在 Certbot 之前）
+# --------------------------------------------------------
+- name: Start and enable Nginx
+  ansible.builtin.systemd:
+    name: nginx
+    state: started
+    enabled: true
+
 # ============================================
 # Certbot SSL Certificate Configuration
 # ============================================
 
 # --------------------------------------------------------
-# 步驟 7：安裝 Certbot（Debian/Ubuntu）
+# 步驟 8：安裝 Certbot（Debian/Ubuntu）
 # --------------------------------------------------------
 - name: Install Certbot (Debian/Ubuntu)
   ansible.builtin.apt:
@@ -78,7 +87,7 @@
     - certbot_enabled | bool
 
 # --------------------------------------------------------
-# 步驟 8：安裝 Certbot（Red Hat/CentOS）
+# 步驟 9：安裝 Certbot（Red Hat/CentOS）
 # --------------------------------------------------------
 - name: Install Certbot (Red Hat/CentOS)
   ansible.builtin.dnf:
@@ -89,7 +98,7 @@
     - certbot_enabled | bool
 
 # --------------------------------------------------------
-# 步驟 9：建立 Certbot webroot 目錄
+# 步驟 10：建立 Certbot webroot 目錄
 # --------------------------------------------------------
 - name: Create certbot webroot directory
   ansible.builtin.file:
@@ -99,7 +108,7 @@
   when: certbot_enabled | bool
 
 # --------------------------------------------------------
-# 步驟 10：檢查 SSL 憑證是否已存在
+# 步驟 11：檢查 SSL 憑證是否已存在
 # --------------------------------------------------------
 - name: Check if SSL certificate already exists
   ansible.builtin.stat:
@@ -108,7 +117,7 @@
   when: certbot_enabled | bool
 
 # --------------------------------------------------------
-# 步驟 11：申請 SSL 憑證（webroot 模式）
+# 步驟 12：申請 SSL 憑證（webroot 模式）
 # --------------------------------------------------------
 - name: Request SSL certificate (webroot mode)
   ansible.builtin.command: >
@@ -126,7 +135,7 @@
   notify: Reload nginx
 
 # --------------------------------------------------------
-# 步驟 12：設定憑證自動續期 Cron
+# 步驟 13：設定憑證自動續期 Cron
 # --------------------------------------------------------
 - name: Setup certificate auto-renewal cron
   ansible.builtin.cron:
@@ -135,15 +144,6 @@
     hour: "3"
     job: "certbot renew --quiet --deploy-hook 'systemctl reload nginx'"
   when: certbot_enabled | bool
-
-# --------------------------------------------------------
-# 步驟 13：啟動並啟用 Nginx 服務
-# --------------------------------------------------------
-- name: Start and enable Nginx
-  ansible.builtin.systemd:
-    name: nginx
-    state: started
-    enabled: true
 
 # ============================================
 # GoAccess Installation & Configuration
