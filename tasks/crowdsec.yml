@@ -137,7 +137,11 @@
       ansible.builtin.command: >
         cscli enroll
         {{ crowdsec_capi_enroll_key }}
-      when: crowdsec_capi_enroll_key | length > 0
+      args:
+        creates: /etc/crowdsec/local/api_credentials.yaml
+      when: 
+        - crowdsec_capi_enroll_key | length > 0
+        - crowdsec_capi_enroll_key is defined
 
 # --------------------------------------------------------
 # 步驟 8：配置 CrowdSec 通知（可選）
