@@ -6,13 +6,13 @@
   when: ansible_facts['os_family'] == "Debian"
 
 - name: 安装 EPEL 仓库（Red Hat/CentOS）
-  ansible.builtin.yum:
+  ansible.builtin.dnf:
     name: epel-release
     state: present
   when: ansible_facts['os_family'] == "RedHat"
 
 - name: 安装 Certbot（Red Hat/CentOS）
-  ansible.builtin.yum:
+  ansible.builtin.dnf:
     name: certbot
     state: present
   when: ansible_facts['os_family'] == "RedHat"
@@ -42,6 +42,8 @@
     --agree-tos
     --non-interactive
     --email {{ certbot_email }}
+  args:
+    creates: "/etc/letsencrypt/live/{{ domain }}/fullchain.pem"
   when: not cert_exists.stat.exists
   notify: reload nginx
 
