@@ -52,7 +52,19 @@
   notify: Reload nginx
 
 # --------------------------------------------------------
-# 步驟 6：檢查 SSL 憑證是否已存在
+# 步驟 6：建立 Certbot webroot 目錄
+# --------------------------------------------------------
+- name: Create certbot webroot directory
+  ansible.builtin.file:
+    path: "{{ certbot_webroot_path }}/.well-known/acme-challenge"
+    state: directory
+    mode: '0755'
+    owner: www-data
+    group: www-data
+  when: certbot_enabled | bool
+
+# --------------------------------------------------------
+# 步驟 7：檢查 SSL 憑證是否已存在
 # --------------------------------------------------------
 - name: Check if SSL certificate already exists
   ansible.builtin.stat:
@@ -61,7 +73,7 @@
   when: certbot_enabled | bool
 
 # --------------------------------------------------------
-# 步驟 7：部署虛擬主機設定（HTTP 模式，含 ACME 驗證）
+# 步驟 8：部署虛擬主機設定（HTTP 模式，含 ACME 驗證）
 # --------------------------------------------------------
 - name: Deploy virtual host configuration (HTTP mode with ACME)
   ansible.builtin.template:
@@ -71,7 +83,7 @@
   notify: Reload nginx
 
 # --------------------------------------------------------
-# 步驟 8：啟動並啟用 Nginx 服務
+# 步驟 9：啟動並啟用 Nginx 服務
 # --------------------------------------------------------
 - name: Start and enable Nginx
   ansible.builtin.systemd:
@@ -84,7 +96,7 @@
 # ============================================
 
 # --------------------------------------------------------
-# 步驟 9：安裝 Certbot（Debian/Ubuntu）
+# 步驟 10：安裝 Certbot（Debian/Ubuntu）
 # --------------------------------------------------------
 - name: Install Certbot (Debian/Ubuntu)
   ansible.builtin.apt:
@@ -95,7 +107,7 @@
     - certbot_enabled | bool
 
 # --------------------------------------------------------
-# 步驟 10：安裝 Certbot（Red Hat/CentOS）
+# 步驟 11：安裝 Certbot（Red Hat/CentOS）
 # --------------------------------------------------------
 - name: Install Certbot (Red Hat/CentOS)
   ansible.builtin.dnf:
@@ -104,18 +116,6 @@
   when:
     - ansible_facts['os_family'] == "RedHat"
     - certbot_enabled | bool
-
-# --------------------------------------------------------
-# 步驟 11：建立 Certbot webroot 目錄
-# --------------------------------------------------------
-- name: Create certbot webroot directory
-  ansible.builtin.file:
-    path: "{{ certbot_webroot_path }}/.well-known/acme-challenge"
-    state: directory
-    mode: '0755'
-    owner: www-data
-    group: www-data
-  when: certbot_enabled | bool
 
 # --------------------------------------------------------
 # 步驟 12：申請 SSL 憑證（webroot 模式）
