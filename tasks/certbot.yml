@@ -45,7 +45,7 @@
   args:
     creates: "/etc/letsencrypt/live/{{ domain }}/fullchain.pem"
   when: not cert_exists.stat.exists
-  notify: reload nginx
+  notify: Reload nginx
 
 - name: 等待 OCSP 信息生效
   ansible.builtin.pause:
