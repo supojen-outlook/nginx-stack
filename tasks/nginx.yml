@@ -1,10 +1,5 @@
 ---
-# Nginx 安裝與基礎配置
-
-# --------------------------------------------------------
-# 步驟 1：安裝 Nginx（Debian/Ubuntu）
-# --------------------------------------------------------
-- name: Update apt cache and install Nginx (Debian/Ubuntu)
+- name: 更新 apt 缓存并安装 Nginx（Debian/Ubuntu）
   ansible.builtin.apt:
     name: nginx
     state: present
@@ -12,39 +7,27 @@
   notify: Restart nginx
   when: ansible_facts['os_family'] == "Debian"
 
-# --------------------------------------------------------
-# 步驟 2：安裝 Nginx（Red Hat/CentOS）
-# --------------------------------------------------------
-- name: Install Nginx (Red Hat/CentOS)
+- name: 安装 Nginx（Red Hat/CentOS）
   ansible.builtin.dnf:
     name: nginx
     state: present
   notify: Restart nginx
   when: ansible_facts['os_family'] == "RedHat"
 
-# --------------------------------------------------------
-# 步驟 3：建立 Nginx 設定目錄
-# --------------------------------------------------------
-- name: Create nginx config directory
+- name: 创建 nginx 配置目录
   ansible.builtin.file:
     path: /etc/nginx/conf.d
     state: directory
     mode: '0755'
 
-# --------------------------------------------------------
-# 步驟 4：部署 nginx 主配置
-# --------------------------------------------------------
-- name: Deploy nginx main configuration
+- name: 部署 nginx 主配置
   ansible.builtin.template:
     src: nginx.conf.j2
     dest: /etc/nginx/nginx.conf
     mode: '0644'
   notify: Reload nginx
 
-# --------------------------------------------------------
-# 步驟 5：部署 conf.d 設定檔
-# --------------------------------------------------------
-- name: Deploy conf.d configurations
+- name: 部署 conf.d 配置
   ansible.builtin.copy:
     src: "conf.d/{{ item }}"
     dest: "/etc/nginx/conf.d/{{ item }}"
@@ -54,32 +37,7 @@
     - ssl-params.conf
   notify: Reload nginx
 
-# --------------------------------------------------------
-# 步驟 6：建立 Certbot webroot 目錄
-# --------------------------------------------------------
-- name: Create certbot webroot directory
-  ansible.builtin.file:
-    path: "{{ certbot_webroot_path }}/.well-known/acme-challenge"
-    state: directory
-    mode: '0755'
-    owner: www-data
-    group: www-data
-  when: certbot_enabled | bool
-
-# --------------------------------------------------------
-# 步驟 7：部署虛擬主機設定（HTTP 模式，含 ACME 驗證）
-# --------------------------------------------------------
-- name: Deploy virtual host configuration (HTTP mode with ACME)
-  ansible.builtin.template:
-    src: domain-http.conf.j2
-    dest: "/etc/nginx/conf.d/{{ domain }}.conf"
-    mode: '0644'
-  notify: Reload nginx
-
-# --------------------------------------------------------
-# 步驟 8：啟動並啟用 Nginx 服務
-# --------------------------------------------------------
-- name: Start and enable Nginx
+- name: 启动并启用 Nginx
   ansible.builtin.systemd:
     name: nginx
     state: started

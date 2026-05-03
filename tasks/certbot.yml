@@ -1,63 +1,40 @@
 ---
-# Certbot SSL 憑證申請與配置
-
-# --------------------------------------------------------
-# 步驟 1：安裝 Certbot（Debian/Ubuntu）
-# --------------------------------------------------------
-- name: Install Certbot (Debian/Ubuntu)
+- name: 安装 Certbot（Debian/Ubuntu）
   ansible.builtin.apt:
     name: certbot
     state: present
-  when:
-    - ansible_facts['os_family'] == "Debian"
-    - certbot_enabled | bool
+  when: ansible_facts['os_family'] == "Debian"
 
-# --------------------------------------------------------
-# 步驟 2：安裝 Certbot（Red Hat/CentOS）
-# --------------------------------------------------------
-- name: Install Certbot (Red Hat/CentOS)
-  ansible.builtin.dnf:
+- name: 安装 EPEL 仓库（Red Hat/CentOS）
+  ansible.builtin.yum:
+    name: epel-release
+    state: present
+  when: ansible_facts['os_family'] == "RedHat"
+
+- name: 安装 Certbot（Red Hat/CentOS）
+  ansible.builtin.yum:
     name: certbot
     state: present
-  when:
-    - ansible_facts['os_family'] == "RedHat"
-    - certbot_enabled | bool
+  when: ansible_facts['os_family'] == "RedHat"
 
-# --------------------------------------------------------
-# 步驟 3：檢查 SSL 憑證是否已存在
-# --------------------------------------------------------
-- name: Check if SSL certificate already exists
+- name: 检查证书是否已存在
   ansible.builtin.stat:
     path: "/etc/letsencrypt/live/{{ domain }}/fullchain.pem"
   register: cert_exists
-  when: certbot_enabled | bool
 
-# --------------------------------------------------------
-# 步驟 4：確保 Nginx 已完全重啟
-# --------------------------------------------------------
-- name: Ensure Nginx is fully restarted
+- name: 确保 Nginx 已完全重启
   ansible.builtin.service:
     name: nginx
     state: restarted
-  when:
-    - certbot_enabled | bool
-    - not cert_exists.stat.exists
+  when: not cert_exists.stat.exists
 
-# --------------------------------------------------------
-# 步驟 5：等待 Nginx 就緒
-# --------------------------------------------------------
-- name: Wait for Nginx to be ready
+- name: 等待 Nginx 就绪
   ansible.builtin.wait_for:
     port: 80
     delay: 2
-  when:
-    - certbot_enabled | bool
-    - not cert_exists.stat.exists
+  when: not cert_exists.stat.exists
 
-# --------------------------------------------------------
-# 步驟 6：申請 SSL 憑證（webroot 模式）
-# --------------------------------------------------------
-- name: Request SSL certificate (webroot mode)
+- name: 申请 SSL 证书（webroot 模式）
   ansible.builtin.command: >
     certbot certonly --webroot
     -w {{ certbot_webroot_path }}
@@ -65,45 +42,17 @@
     --agree-tos
     --non-interactive
     --email {{ certbot_email }}
-  args:
-    creates: "/etc/letsencrypt/live/{{ domain }}/fullchain.pem"
-  when:
-    - certbot_enabled | bool
-    - certbot_email | length > 0
-    - not cert_exists.stat.exists
-  register: certbot_result
-  notify: Reload nginx
+  when: not cert_exists.stat.exists
+  notify: reload nginx
 
-# --------------------------------------------------------
-# 步驟 7：重新部署虛擬主機設定（啟用 SSL）
-# --------------------------------------------------------
-- name: Re-deploy virtual host configuration (with SSL)
-  ansible.builtin.template:
-    src: domain.conf.j2
-    dest: "/etc/nginx/conf.d/{{ domain }}.conf"
-    mode: '0644'
-  when:
-    - certbot_enabled | bool
-    - certbot_result.changed | default(false)
-  notify: Reload nginx
-
-# --------------------------------------------------------
-# 步驟 8：等待 OCSP 信息生效
-# --------------------------------------------------------
-- name: Wait for OCSP information to take effect
+- name: 等待 OCSP 信息生效
   ansible.builtin.pause:
     seconds: 30
-  when:
-    - certbot_enabled | bool
-    - not cert_exists.stat.exists
+  when: not cert_exists.stat.exists
 
-# --------------------------------------------------------
-# 步驟 9：設定憑證自動續期 Cron
-# --------------------------------------------------------
-- name: Setup certificate auto-renewal cron
+- name: 设置证书自动续期
   ansible.builtin.cron:
-    name: "Certbot auto renewal"
+    name: "Certbot 自动续期"
     minute: "0"
     hour: "3"
     job: "certbot renew --quiet --deploy-hook 'systemctl reload nginx'"
-  when: certbot_enabled | bool
