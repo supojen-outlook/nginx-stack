@@ -44,4 +44,3 @@ galaxy_info:
     - monitoring
 
 dependencies: []
-  # 在此列出 role 依赖，每行一个。如果添加依赖，请移除上面的 '[]'
