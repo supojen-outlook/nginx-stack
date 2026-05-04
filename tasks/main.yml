@@ -22,4 +22,3 @@
 - name: Import GeoIP tasks
   ansible.builtin.import_tasks: geoip.yml
   tags: geoip
-
