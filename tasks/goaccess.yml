@@ -8,11 +8,19 @@
     lock_timeout: 300
   when: ansible_facts['os_family'] == "Debian"
 
-- name: 加入 GoAccess GPG key (Debian/Ubuntu)
-  ansible.builtin.apt_key:
+- name: 下載 GoAccess GPG 金鑰 (Debian/Ubuntu)
+  ansible.builtin.get_url:
     url: https://deb.goaccess.io/gnugpg.key
-    keyring: /usr/share/keyrings/goaccess.gpg
+    dest: /usr/share/keyrings/goaccess.gpg
+    mode: '0644'
+    # 此金鑰是二進制格式，無需使用 'gpg --dearmor' 轉換
+  when: ansible_facts['os_family'] == "Debian"
+
+- name: 加入 GoAccess APT 來源 (Debian/Ubuntu)
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/goaccess.gpg] https://deb.goaccess.io/ {{ ansible_facts['distribution_release'] }} main"
     state: present
+    update_cache: true
   when: ansible_facts['os_family'] == "Debian"
 
 - name: 加入 GoAccess APT repository (Debian/Ubuntu)
